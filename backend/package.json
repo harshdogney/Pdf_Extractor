@@ -1,0 +1,25 @@
+{
+  "name": "pdf-extractor-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "worker": "node --watch src/queue/worker.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.15.0",
+    "axios": "^1.13.6",
+    "bullmq": "^5.4.2",
+    "cloudinary": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ioredis": "^5.3.2",
+    "multer": "^1.4.5-lts.1",
+    "mupdf": "^1.27.0",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.11.5",
+    "tesseract.js": "^5.1.0",
+    "uuid": "^9.0.1"
+  }
+}
