@@ -1,25 +1,23 @@
-import pg from "pg";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-const { Pool } = pg;
+let isConnected = false;
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// Initialize table on startup
 export async function initDB() {
-  await pool.query(`
-    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-    CREATE TABLE IF NOT EXISTS documents (
-      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      file_url    TEXT NOT NULL,
-      status      TEXT NOT NULL DEFAULT 'uploaded',
-      raw_text    TEXT,
-      extracted_data JSONB,
-      created_at  TIMESTAMPTZ DEFAULT NOW()
-    );
-  `);
-  console.log("[db] PostgreSQL connected and table ready");
-}
+  if (isConnected) return;
 
-export default pool;
+  const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) {
+    throw new Error("MONGODB_URI is not set in environment");
+  }
+
+  await mongoose.connect(mongoUri, {
+    tls: true,
+    // Helps fail fast with a clear error when Atlas networking/IP rules block access.
+    serverSelectionTimeoutMS: 15000,
+  });
+  isConnected = true;
+  console.log("[db] MongoDB connected");
+}

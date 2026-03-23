@@ -31,7 +31,7 @@ const worker = new Worker(
     await updateDocument(documentId, {
       status: "completed",
       raw_text: text,
-      extracted_data: JSON.stringify(extractedData),
+      extracted_data: extractedData,
     });
 
     console.log(`[worker] Completed document ${documentId}`);

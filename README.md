@@ -1,6 +1,6 @@
 # AI PDF Extractor
 
-Upload a scanned PDF → OCR extracts text (MuPDF + Tesseract) → Gemini AI parses structured fields → stored in PostgreSQL → displayed in React UI.
+Upload a scanned PDF → OCR extracts text (MuPDF + Tesseract) → Gemini AI parses structured fields → stored in MongoDB → displayed in React UI.
 
 ---
 
@@ -9,13 +9,13 @@ Upload a scanned PDF → OCR extracts text (MuPDF + Tesseract) → Gemini AI par
 ```
 React (Vite + Tailwind)
   └─ POST /api/upload ──► Express ──► Cloudinary (store PDF)
-                                  └─► PostgreSQL (create record)
+                                  └─► MongoDB (create record)
                                   └─► BullMQ (enqueue job)
                                          └─► Worker
                                                ├─ MuPDF (render pages → PNG)
                                                ├─ Tesseract.js (OCR on PNG)
                                                ├─ Gemini 2.5 Flash (field extraction)
-                                               └─ PostgreSQL (save results)
+                                              └─ MongoDB (save results)
 ```
 
 ---
@@ -30,7 +30,7 @@ React (Vite + Tailwind)
 | OCR | MuPDF (PDF → PNG), Tesseract.js |
 | AI | Google Gemini 2.5 Flash (`@google/generative-ai`) |
 | Storage | Cloudinary (PDF files) |
-| Database | PostgreSQL |
+| Database | MongoDB |
 
 ---
 
@@ -39,7 +39,7 @@ React (Vite + Tailwind)
 | Tool | Version |
 |------|---------|
 | Node.js | ≥ 20 |
-| PostgreSQL | ≥ 14 |
+| MongoDB | ≥ 7 |
 | Redis | ≥ 7 |
 
 ---
@@ -49,7 +49,7 @@ React (Vite + Tailwind)
 ### `backend/.env`
 ```env
 PORT=5000
-DATABASE_URL=postgresql://user:password@localhost:5432/pdf_extractor
+MONGODB_URI=mongodb://127.0.0.1:27017/pdf_extractor
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
@@ -67,12 +67,9 @@ VITE_API_BASE_URL=http://localhost:5000
 
 ## 2. Database Setup
 
-```sql
--- Run in psql
-CREATE DATABASE pdf_extractor;
-```
+Start MongoDB locally and ensure `MONGODB_URI` in `backend/.env` points to your running instance.
 
-The `documents` table is auto-created on server start via `initDB()`.
+The `documents` collection is created automatically when the app saves the first record.
 
 ---
 
@@ -128,7 +125,7 @@ npm run dev
 3. Tesseract.js runs OCR on each PNG — currently `eng+tam` (English + Tamil)
 4. All page texts are joined and sent to Gemini 2.5 Flash with the user-defined fields
 5. Gemini returns a JSON array of extracted records
-6. Results are saved to PostgreSQL and status is set to `completed`
+6. Results are saved to MongoDB and status is set to `completed`
 
 ### Polling flow
 - Frontend polls `GET /api/document/:id` every 3 seconds until status is `completed` or `failed`
