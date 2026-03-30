@@ -20,8 +20,7 @@ const worker = new Worker(
   "document-processing",
   async (job) => {
     const { documentId, fileUrl, fileBuffer, fields } = job.data;
-    console.log(`[worker] Processing job ${job.id} — document ${documentId}`);
-
+  
     await updateDocument(documentId, { status: "processing" });
 
     const buffer = Buffer.from(fileBuffer, "base64");
@@ -34,8 +33,7 @@ const worker = new Worker(
       extracted_data: extractedData,
     });
 
-    console.log(`[worker] Completed document ${documentId}`);
-  },
+    },
   {
     connection: redis,
     concurrency: 3,

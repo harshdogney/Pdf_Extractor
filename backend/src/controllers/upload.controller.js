@@ -18,20 +18,13 @@ export async function uploadDocument(req, res) {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    console.log(`[upload] Received file: ${req.file.originalname} (${req.file.size} bytes)`);
-
     // 1. Upload to Cloudinary
-    console.log("[upload] Uploading to Cloudinary...");
     const cloudResult = await uploadToCloudinary(req.file.buffer, req.file.originalname);
-    console.log(`[upload] Cloudinary URL: ${cloudResult.secure_url}`);
-
+    
     // 2. Create DB record
-    console.log("[upload] Saving to DB...");
     const doc = await createDocument(cloudResult.secure_url);
-    console.log(`[upload] Document created: ${doc.id}`);
-
+    
     // 3. Enqueue processing job
-    console.log("[upload] Enqueueing job...");
     const fields = req.body.fields ? JSON.parse(req.body.fields) : [];
     await documentQueue.add("process", {
       documentId: doc.id,
