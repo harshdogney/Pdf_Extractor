@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "worker": "node --watch src/queue/worker.js"
+    "dev": "concurrently \"node --watch src/server.js\" \"node --watch src/queue/worker.js\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.15.0",
