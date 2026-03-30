@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getDocument } from "../services/api.js";
 
 const STATUS_STYLES = {
@@ -13,28 +13,48 @@ export default function ResultViewer({ documentId, onReset }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const timerRef = useRef(null);
+  const pollingRef = useRef(false);
+
+  function stopPolling() {
+    pollingRef.current = false;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }
 
   async function fetchResult() {
+    if (pollingRef.current) return;
+    pollingRef.current = true;
     setLoading(true);
     setError("");
-    let active = true;
+
     async function poll() {
+      if (!pollingRef.current) return;
       try {
         const { data } = await getDocument(documentId);
-        if (!active) return;
+        if (!pollingRef.current) return;
+
         setDoc(data);
         if (data.status !== "completed" && data.status !== "failed") {
           timerRef.current = setTimeout(poll, 3000);
         } else {
+          stopPolling();
           setLoading(false);
         }
       } catch {
-        if (active) { setError("Failed to fetch document status."); setLoading(false); }
+        if (pollingRef.current) {
+          setError("Failed to fetch document status.");
+          stopPolling();
+          setLoading(false);
+        }
       }
     }
-    poll();
-    return () => { active = false; clearTimeout(timerRef.current); };
+
+    await poll();
   }
+
+  useEffect(() => () => stopPolling(), []);
 
   const extracted = doc?.extracted_data;
   const isArray = Array.isArray(extracted);
@@ -45,7 +65,15 @@ export default function ResultViewer({ documentId, onReset }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">Extraction Result</h2>
-        <button onClick={onReset} className="text-sm text-blue-500 hover:underline">Upload another</button>
+        <button
+          onClick={() => {
+            stopPolling();
+            onReset();
+          }}
+          className="text-sm text-blue-500 hover:underline"
+        >
+          Upload another
+        </button>
       </div>
 
       {/* Initial button — no fetch yet */}
@@ -140,7 +168,7 @@ export default function ResultViewer({ documentId, onReset }) {
       )}
 
       {/* Raw text */}
-      {doc?.raw_text && (
+      {/* {doc?.raw_text && (
         <details>
           <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 select-none">
             View raw extracted text
@@ -149,7 +177,7 @@ export default function ResultViewer({ documentId, onReset }) {
             {doc.raw_text}
           </pre>
         </details>
-      )}
+      )} */}
     </div>
   );
 }
